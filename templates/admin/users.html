@@ -50,8 +50,8 @@
             
             <div class="dropdown">
                 <button class="btn dropdown-toggle d-flex align-items-center user-dropdown" type="button" id="userDropdown" data-bs-toggle="dropdown">
-                    <img src="https://via.placeholder.com/150" alt="User">
-                    <span>Администратор</span>
+                    <img src="{{ avatar or '../../static/admin/img/default-avatar.jpg' }}" alt="User">
+                    <span>{{ first_name }} {{ last_name }}</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i>Профиль</a></li>
@@ -74,7 +74,7 @@
             <div class="card">
                 <div class="card-header">
                     <span>Список пользователей</span>
-                    <span class="text-muted">Всего: 124</span>
+                    <span class="text-muted">Всего: {{ users_count or 0 }}</span>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -90,17 +90,18 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                {% for u in users_list %}
                                 <tr>
-                                    <td>1</td>
+                                    <td>{{ u.id }}</td>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <img src="https://via.placeholder.com/150" class="user-avatar me-2">
-                                            <span>Иван Петров</span>
+                                            <img src="{{ u.image_path or '../../static/admin/img/default-avatar.jpg' }}" class="user-avatar me-2">
+                                            <span>{{ u.first_name }} {{ u.last_name }}</span>
                                         </div>
                                     </td>
-                                    <td>ivan@example.com</td>
-                                    <td>+7 (900) 123-45-67</td>
-                                    <td>12.05.2023</td>
+                                    <td>{{ u.email }}</td>
+                                    <td>{{ u.phone }}</td>
+                                    <td>{{ u.created_at }}</td>
                                     <td>
                                         <div class="d-flex justify-content-center">
                                             <a href="#" class="action-btn text-primary" title="Редактировать">
@@ -112,6 +113,7 @@
                                         </div>
                                     </td>
                                 </tr>
+                                {% endfor %}
                             </tbody>
                         </table>
                     </div>

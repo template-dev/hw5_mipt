@@ -9,18 +9,17 @@ from app3.admin.auth import schemas as user_schemas
 from sqlalchemy.future import select
 from datetime import timedelta
 from fastapi.responses import RedirectResponse
+from sqlalchemy import func
+from app.orders.models import Order
+from app2.products.models import Product
 
-router = APIRouter(prefix="/auth", tags=["Auth"])
+router = APIRouter()
 
 async def get_db() -> AsyncSession:
     async with AsyncSessionLocal() as session:
         yield session
 
-@router.get("/me")
-async def get_me(user: user_models.Users = Depends(auth.get_current_user)):
-    return {"email": user.email, "id": user.id}
-
-@router.post("/login")
+@router.post("/auth/login")
 async def login(
     email: str = Form(...),
     password: str = Form(...),
@@ -49,7 +48,7 @@ async def login(
     )
     return response
 
-@router.get("/register")
+@router.get("/auth/register")
 async def register(
     first_name: str = Form(...),
     last_name: str = Form(...),
@@ -76,8 +75,41 @@ async def register(
     await db.refresh(new_user)
     return {"msg": "Пользователь успешно зарегистрирован"}
 
-@router.get("/logout")
+@router.get("/auth/logout")
 async def logout():
     response = RedirectResponse(url="/auth/login", status_code=302)
     response.delete_cookie("access_token")
     return response
+
+async def get_statistics(db: AsyncSession = Depends(get_db)):
+    orders_result = await db.execute(select(func.count(Order.id)))
+    orders_count = orders_result.scalar()
+
+    orders_result = await db.execute(select(Order.items))
+    orders = orders_result.scalars().all()
+
+    total_income = 0
+    for order_items in orders:
+        for item in order_items:
+            total_income += item["price"] * item.get("quantity", 1)
+
+    products_result = await db.execute(select(func.count(Product.id)))
+    products_count = products_result.scalar()
+
+    users_result = await db.execute(func.count(user_models.Users.id))
+    users_count = users_result.scalar()
+
+    return {
+        "orders_count": orders_count,
+        "total_income": total_income,
+        "products_count": products_count,
+        "users_count": users_count
+    }
+
+async def get_users_count(db: AsyncSession = Depends(get_db)):
+    users_result = await db.execute(func.count(user_models.Users.id))
+    users_count = users_result.scalar()
+
+    return {
+        "users_count": users_count
+    }

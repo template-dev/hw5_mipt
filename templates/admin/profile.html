@@ -50,8 +50,8 @@
             
             <div class="dropdown">
                 <button class="btn dropdown-toggle d-flex align-items-center user-dropdown" type="button" id="userDropdown" data-bs-toggle="dropdown">
-                    <img src="https://via.placeholder.com/150" alt="User">
-                    <span>Администратор</span>
+                    <img src="{{ avatar or '../../static/admin/img/default-avatar.jpg' }}" alt="User">
+                    <span>{{ first_name }} {{ last_name }}</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i>Профиль</a></li>
@@ -68,14 +68,14 @@
                     <div class="card">
                         <div class="card-body text-center">
                             <div class="profile-avatar-upload">
-                                <img src="https://via.placeholder.com/120" class="profile-avatar mb-3" id="profileAvatar">
+                                <img src="{{ avatar or '../../static/admin/img/default-avatar.jpg' }}" class="profile-avatar mb-3" id="profileAvatar">
                                 <div class="profile-avatar-upload-btn" onclick="document.getElementById('avatarUpload').click()">
                                     <i class="fas fa-camera"></i>
                                 </div>
                                 <input type="file" id="avatarUpload" class="d-none" accept="image/*">
                             </div>
                             
-                            <h4 class="mb-1">Иван Петров</h4>
+                            <h4 class="mb-1">{{ first_name }} {{ last_name }}</h4>
                             <p class="text-muted mb-3">Администратор</p>
                         </div>
                     </div>
@@ -87,15 +87,15 @@
                         <div class="card-body">
                             <div class="mb-3">
                                 <label class="form-label">Фамилия Имя</label>
-                                <p>Иванов Иван</p>
+                                <p>{{ last_name }} {{ first_name }}</p>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Email</label>
-                                <p>ivan.petrov@example.com</p>
+                                <p>{{ email }}</p>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Телефон</label>
-                                <p>+7 (900) 123-45-67</p>
+                                <p>{{ phone }}</p>
                             </div>
                         </div>
                     </div>
@@ -120,28 +120,28 @@
                                         <div class="row g-3">
                                             <div class="col-md-6">
                                                 <div class="form-floating">
-                                                    <input type="text" class="form-control" id="firstName" placeholder="Иван" value="Иван" required>
+                                                    <input type="text" class="form-control" id="firstName" placeholder="Иван" value="{{ first_name }}" required>
                                                     <label for="firstName">Имя*</label>
                                                     <div class="invalid-feedback">Пожалуйста, укажите имя</div>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-floating">
-                                                    <input type="text" class="form-control" id="lastName" placeholder="Петров" value="Петров" required>
+                                                    <input type="text" class="form-control" id="lastName" placeholder="Петров" value="{{ last_name }}" required>
                                                     <label for="lastName">Фамилия*</label>
                                                     <div class="invalid-feedback">Пожалуйста, укажите фамилию</div>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-floating">
-                                                    <input type="email" class="form-control" id="email" placeholder="name@example.com" value="ivan.petrov@example.com" required>
+                                                    <input type="email" class="form-control" id="email" placeholder="name@example.com" value="{{ email }}" required>
                                                     <label for="email">Email*</label>
                                                     <div class="invalid-feedback">Пожалуйста, укажите корректный email</div>
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
                                                 <div class="form-floating">
-                                                    <input type="tel" class="form-control" id="phone" placeholder="+7 (900) 123-45-67" value="+7 (900) 123-45-67">
+                                                    <input type="tel" class="form-control" id="phone" placeholder="+7 (900) 123-45-67" value="{{ phone }}">
                                                     <label for="phone">Телефон</label>
                                                 </div>
                                             </div>

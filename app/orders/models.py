@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, JSON, DateTime
+from sqlalchemy import Column, Integer, String, JSON, DateTime, Float
 from app.database.db import Base
 from datetime import datetime
 from enum import Enum as SqlEnum
@@ -23,6 +23,7 @@ class Order(Base):
     delivery_street = Column(String(100))
     delivery_building = Column(String(20))
     items = Column(JSON)
+    total_price = Column(Float)
     status = Column(String(20), default=OrderStatus.CREATED)
     created_at = Column(DateTime, default=datetime.utcnow)
     session_id = Column(String(36))

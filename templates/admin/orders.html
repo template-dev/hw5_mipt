@@ -50,8 +50,8 @@
             
             <div class="dropdown">
                 <button class="btn dropdown-toggle d-flex align-items-center user-dropdown" type="button" id="userDropdown" data-bs-toggle="dropdown">
-                    <img src="https://via.placeholder.com/150" alt="User">
-                    <span>Администратор</span>
+                    <img src="{{ avatar or '../../static/admin/img/default-avatar.jpg' }}" alt="User">
+                    <span>{{ first_name }} {{ last_name }}</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i>Профиль</a></li>

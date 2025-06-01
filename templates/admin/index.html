@@ -49,8 +49,8 @@
             
             <div class="dropdown">
                 <button class="btn dropdown-toggle d-flex align-items-center user-dropdown" type="button" id="userDropdown" data-bs-toggle="dropdown">
-                    <img src="https://via.placeholder.com/150" alt="User">
-                    <span>Администратор</span>
+                    <img src="{{ avatar or '../../static/admin/img/default-avatar.jpg' }}" alt="User">
+                    <span>{{ first_name }} {{ last_name }}</span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i>Профиль</a></li>
@@ -71,7 +71,7 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="text-muted mb-2">Пользователи</h6>
-                                    <h3>1,254</h3>
+                                    <h3>{{ users_count }}</h3>
                                 </div>
                                 <div class="bg-primary bg-opacity-10 p-3 rounded">
                                     <i class="fas fa-users text-primary"></i>
@@ -87,7 +87,7 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="text-muted mb-2">Заказы</h6>
-                                    <h3>356</h3>
+                                    <h3>{{ orders_count }}</h3>
                                 </div>
                                 <div class="bg-success bg-opacity-10 p-3 rounded">
                                     <i class="fas fa-shopping-cart text-success"></i>
@@ -103,7 +103,7 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="text-muted mb-2">Доход</h6>
-                                    <h3>$8,540</h3>
+                                    <h3>{{ total_income }}₽</h3>
                                 </div>
                                 <div class="bg-warning bg-opacity-10 p-3 rounded">
                                     <i class="fas fa-dollar-sign text-warning"></i>
@@ -119,61 +119,10 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <h6 class="text-muted mb-2">Товары</h6>
-                                    <h3>654</h3>
+                                    <h3>{{ products_count }}</h3>
                                 </div>
                                 <div class="bg-info bg-opacity-10 p-3 rounded">
                                     <i class="fas fa-box text-info"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row mt-4">
-                <div class="col-md-8">
-                    <div class="card">
-                        <div class="card-header">
-                            Статистика продаж
-                        </div>
-                        <div class="card-body">
-                            <div style="height: 300px; background: #f8f9fa; display: flex; align-items: center; justify-content: center;">
-                                [График будет здесь]
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header">
-                            Последние заказы
-                        </div>
-                        <div class="card-body">
-                            <div class="list-group list-group-flush">
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1">Заказ #1254</h6>
-                                    </div>
-                                    <span class="badge bg-primary">Новый</span>
-                                </div>
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1">Заказ #1253</h6>
-                                    </div>
-                                    <span class="badge bg-warning">В работе</span>
-                                </div>
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1">Заказ #1252</h6>
-                                    </div>
-                                    <span class="badge bg-success">Завершен</span>
-                                </div>
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1">Заказ #1251</h6>
-                                    </div>
-                                    <span class="badge bg-success">Завершен</span>
                                 </div>
                             </div>
                         </div>
