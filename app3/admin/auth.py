@@ -7,6 +7,7 @@ from . import schemas, models
 from app3.database.db import AsyncSessionLocal
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from fastapi import Cookie
 
 SECRET_KEY = "mF9xLqZ3yVt2B8WnRuE6aKjDpS1cHgXo"
 ALGORITHM = "HS256"
@@ -37,29 +38,27 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    access_token: str | None = Cookie(default=None),
     db: AsyncSession = Depends(get_db)
 ) -> models.Users:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Неверные учетные данные",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    if access_token is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Отсутствует токен авторизации",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if not email:
-            raise credentials_exception
-        token_data = schemas.TokenData(email=email)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Неверный токен")
     except JWTError:
-        raise credentials_exception
-    
-    stmt = select(models.Users).where(models.Users.email == token_data.email)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Неверный токен")
+
+    stmt = select(models.Users).where(models.Users.email == email)
     result = await db.execute(stmt)
     user = result.scalars().first()
-
     if not user:
-        raise credentials_exception
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Пользователь не найден")
     return user
