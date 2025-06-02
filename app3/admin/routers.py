@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Form
+from fastapi import APIRouter, Depends, HTTPException, status, Form, UploadFile, File, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from app3.database.db import AsyncSessionLocal
@@ -12,8 +12,15 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import func
 from app.orders.models import Order
 from app2.products.models import Product
+from app3.admin.file_utils import save_upload_file
+import shutil
+import os
+from pathlib import Path
 
 router = APIRouter()
+
+UPLOAD_DIR = Path("uploads/avatars")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 async def get_db() -> AsyncSession:
     async with AsyncSessionLocal() as session:
@@ -48,13 +55,14 @@ async def login(
     )
     return response
 
-@router.get("/auth/register")
+@router.post("/users")
 async def register(
     first_name: str = Form(...),
     last_name: str = Form(...),
     email: str = Form(...),
     phone: str = Form(...),
     password: str = Form(...),
+    avatar: UploadFile = File(None),
     db: AsyncSession = Depends(get_db)
 ):
     result = await db.execute(select(user_models.Users).where(user_models.Users.email == email))
@@ -62,17 +70,36 @@ async def register(
     if existing_user:
         raise HTTPException(status_code=400, detail="Пользователь с таким email уже существует")
 
+    avatar_path = None
+    if avatar:
+        from pathlib import Path
+        import shutil
+        UPLOAD_DIR = Path("uploads/avatars")
+        UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+        filename = f"{email}_{avatar.filename}"
+        file_path = UPLOAD_DIR / filename
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(avatar.file, buffer)
+        avatar_path = str(file_path)
+
     hashed_password = get_password_hash(password)
+
     new_user = user_models.Users(
         first_name=first_name,
         last_name=last_name,
         email=email,
         phone=phone,
-        hashed_password=hashed_password
+        hashed_password=hashed_password,
+        image_path=avatar_path
     )
+
+    print(new_user)
+
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
+
     return {"msg": "Пользователь успешно зарегистрирован"}
 
 @router.get("/auth/logout")
@@ -85,18 +112,19 @@ async def get_statistics(db: AsyncSession = Depends(get_db)):
     orders_result = await db.execute(select(func.count(Order.id)))
     orders_count = orders_result.scalar()
 
-    orders_result = await db.execute(select(Order.items))
-    orders = orders_result.scalars().all()
-
     total_income = 0
-    for order_items in orders:
-        for item in order_items:
-            total_income += item["price"] * item.get("quantity", 1)
+    orders_result = await db.execute(select(Order))
+    orders = orders_result.scalars().all()
+    
+    for order in orders:
+        if order.order_items:
+            for item in order.order_items:
+                total_income += item.get("price", 0) * item.get("quantity", 1)
 
     products_result = await db.execute(select(func.count(Product.id)))
     products_count = products_result.scalar()
 
-    users_result = await db.execute(func.count(user_models.Users.id))
+    users_result = await db.execute(select(func.count(user_models.Users.id)))
     users_count = users_result.scalar()
 
     return {
@@ -106,10 +134,70 @@ async def get_statistics(db: AsyncSession = Depends(get_db)):
         "users_count": users_count
     }
 
+async def get_orders(db: AsyncSession):
+    result = await db.execute(select(Order).order_by(Order.created_at.desc()))
+    return result.scalars().all()
+
 async def get_users_count(db: AsyncSession = Depends(get_db)):
     users_result = await db.execute(func.count(user_models.Users.id))
     users_count = users_result.scalar()
+    return users_count
 
-    return {
-        "users_count": users_count
-    }
+async def get_orders_count(equest: Request, db: AsyncSession):
+    orders_result = await db.execute(select(func.count(Order.id)))
+    orders_count = orders_result.scalar()
+    return orders_count
+
+async def enrich_orders_with_items(orders: list[Order], db: AsyncSession):
+    enriched_orders = []
+    
+    for order in orders:
+        enriched_items = []
+        
+        if not order.order_items:
+            enriched_orders.append({
+                "order": order,
+                "items": [],
+                "total_price": 0
+            })
+            continue
+        
+        for item in order.order_items:
+            product_id = item.get("product_id")
+            quantity = item.get("quantity", 1)
+
+            if not product_id:
+                continue
+
+            result = await db.execute(select(Product).where(Product.id == product_id))
+            product = result.scalars().first()
+
+            if product:
+                enriched_items.append({
+                    "product_id": product_id,
+                    "quantity": quantity,
+                    "name": product.name,
+                    "description": product.description,
+                    "image_url": product.image_path if hasattr(product, 'image_url') else None,
+                    "price": product.price,
+                    "total_price": product.price * quantity
+                })
+
+        total_price = sum(item['total_price'] for item in enriched_items)
+        enriched_orders.append({
+            "order": order,
+            "items": enriched_items,
+            "total_price": total_price
+        })
+    
+    return enriched_orders
+
+async def get_all_products(db: AsyncSession):
+    result = await db.execute(select(Product))
+    products = result.scalars().all()
+    
+    for product in products:
+        if product.image_path:
+            product.image_url = f"/{product.image_path}"
+
+    return products

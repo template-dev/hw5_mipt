@@ -15,7 +15,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from app3.admin.redirect_middleware import get_current_user_or_redirect
 from app3.admin.models import Users
 from fastapi.responses import RedirectResponse
-from app3.admin.routers import router as admin_router, get_statistics, get_db, get_users_count
+from app3.admin.routers import router as admin_router, get_statistics, get_db, get_users_count, get_orders, get_orders_count, enrich_orders_with_items, get_all_products
 
 app = FastAPI()
 
@@ -35,7 +35,7 @@ app.mount(
     StaticFiles(directory=TEMPLATES_DIR),
     name="static"
 )
-
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 app.add_middleware(
@@ -107,15 +107,31 @@ async def users(request: Request, user: Users = Depends(get_current_user_or_redi
     return templates.TemplateResponse("admin/users.html", {
         "request": request,
         **current_user,
-        **users_count,
+        "users_count": users_count,
         "users_list": users_list
     })
 
 @app.get("/products", response_class=HTMLResponse)
-async def products(request: Request, user: Users = Depends(get_current_user_or_redirect)):
+async def products(request: Request, user: Users = Depends(get_current_user_or_redirect), db: AsyncSession = Depends(get_db)):
     if isinstance(user, RedirectResponse):
         return user
-    return templates.TemplateResponse("admin/products.html", {"request": request})
+    
+    current_user = {
+        "email": user.email,
+        "id": user.id,
+        "avatar": getattr(user, "image_path", None),
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "phone": user.phone,
+    }
+    
+    products_list = await get_all_products(db)
+
+    return templates.TemplateResponse("admin/products.html", {
+        "request": request,
+        "products_list": products_list,
+        **current_user
+    })
 
 @app.get("/profile", response_class=HTMLResponse)
 async def profile(request: Request, user: Users = Depends(get_current_user_or_redirect)):
@@ -130,10 +146,28 @@ async def profile(request: Request, user: Users = Depends(get_current_user_or_re
         "last_name": user.last_name,
         "phone": user.phone,
     }
-    return templates.TemplateResponse("admin/profile.html", {"request": request, **current_user})
+    
+    return templates.TemplateResponse("admin/profile.html", {
+        "request": request,
+        **current_user
+    })
 
 @app.get("/orders", response_class=HTMLResponse)
-async def orders(request: Request, user: Users = Depends(get_current_user_or_redirect)):
+async def orders(
+    request: Request,
+    user: Users = Depends(get_current_user_or_redirect),
+    db: AsyncSession = Depends(get_db)
+):
     if isinstance(user, RedirectResponse):
         return user
-    return templates.TemplateResponse("admin/orders.html", {"request": request})
+
+    orders_count = await get_orders_count(request, db)
+    orders_list = await get_orders(db)
+
+    orders_with_products = await enrich_orders_with_items(orders_list, db)
+
+    return templates.TemplateResponse("admin/orders.html", {
+        "request": request,
+        "orders_count": orders_count,
+        "orders_with_products": orders_with_products,
+    })

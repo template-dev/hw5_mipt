@@ -19,9 +19,7 @@ document.getElementById('authForm').addEventListener('submit', function(e) {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     
-    if (email && password) {
-        alert('Авторизация успешна!');
-    } else {
+    if (!email && !password) {
         alert('Пожалуйста, заполните все поля!');
     }
 });

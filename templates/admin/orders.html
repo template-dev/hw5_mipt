@@ -71,7 +71,7 @@
             <div class="card">
                 <div class="card-header">
                     <span>Список заказов</span>
-                    <span class="text-muted">Всего: 42</span>
+                    <span class="text-muted">Всего: {{ orders_count }}</span>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
@@ -80,7 +80,6 @@
                                 <tr>
                                     <th width="80">ID</th>
                                     <th>Клиент</th>
-                                    <th>Товары</th>
                                     <th>Сумма</th>
                                     <th>Статус</th>
                                     <th>Дата</th>
@@ -88,54 +87,110 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>#ORD-1245</td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <img src="https://via.placeholder.com/150" class="user-avatar me-2">
-                                            <div>
-                                                <div>Иван Петров</div>
-                                                <small class="text-muted">ivan@example.com</small>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <span>3 товара</span>
-                                        </div>
-                                    </td>
-                                    <td>12 450 ₽</td>
-                                    <td>
-                                        <span class="badge bg-info text-dark">В обработке</span>
-                                    </td>
-                                    <td>12.05.2023</td>
-                                    <td>
-                                        <div class="d-flex justify-content-center">
-                                            <a href="#" class="action-btn text-primary me-2" title="Просмотреть" data-bs-toggle="modal" data-bs-target="#orderDetailsModal">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
+                                <!--{% if orders_with_products %}
+                                    {% for order_data in orders_with_products %}
+                                        {% set order = order_data['order'] %}
+                                        {% set items = order_data['items'] %}
+                                        {% set total_price = items | map(attribute='total_price') | sum %}
+                                        <tr>
+                                            <td>#ORD-{{ order.id }}</td>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {# Можешь выводить первую картинку товара, если у заказа нет своей картинки #}
+                                                    {% if items and items[0].image_url %}
+                                                        <img src="{{ items[0].image_url }}" class="user-avatar me-2" style="width: 40px; height: 40px;">
+                                                    {% else %}
+                                                        <img src="/static/default-avatar.png" class="user-avatar me-2" style="width: 40px; height: 40px;">
+                                                    {% endif %}
+                                                    <div>
+                                                        <div>{{ order.customer_name }} {{ order.customer_surname }}</div>
+                                                        <small class="text-muted">{{ order.customer_email }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% for item in items %}
+                                                    <div>
+                                                        {{ item.name }} — {{ item.quantity }} шт
+                                                    </div>
+                                                {% endfor %}
+                                            </td>
+                                            <td>{{ total_price }} ₽</td>
+                                            <td>
+                                                <span class="badge bg-info text-dark">{{ order.status }}</span>
+                                            </td>
+                                            <td>{{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                                            <td>
+                                                <div class="d-flex justify-content-center">
+                                                    <a href="#" class="action-btn text-primary me-2" title="Просмотреть" data-bs-toggle="modal" data-bs-target="#orderDetailsModal">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="7"><i>Заказов ещё нет.</i></td>
+                                    </tr>
+                                {% endif %}-->
+                                {% if orders_with_products %}
+    {% for order_data in orders_with_products %}
+        {% set order = order_data.order %}
+        {% set items = order_data.items %}
+        {% set total_price = order_data.total_price %}
+        <tr>
+            <td>#ORD-{{ order.id }}</td>
+            <td>
+                <div class="d-flex align-items-center">
+                    {% if items and items[0].image_url %}
+                        <img src="{{ items[0].image_url }}" class="user-avatar me-2" style="width: 40px; height: 40px;">
+                    {% else %}
+                        <img src="/static/default-avatar.png" class="user-avatar me-2" style="width: 40px; height: 40px;">
+                    {% endif %}
+                    <div>
+                        <div>{{ order.customer_name }} {{ order.customer_surname }}</div>
+                        <small class="text-muted">{{ order.customer_email }}</small>
+                    </div>
+                </div>
+            </td>
+            <td>
+                {% for item in items %}
+                    <div>
+                        {{ item.name }} — {{ item.quantity }} шт
+                    </div>
+                {% endfor %}
+            </td>
+            <td>{{ total_price }} ₽</td>
+            <td>
+                <span class="badge 
+                    {% if order.status == 'created' %}bg-secondary
+                    {% elif order.status == 'processing' %}bg-warning text-dark
+                    {% elif order.status == 'shipped' %}bg-info text-dark
+                    {% elif order.status == 'delivered' %}bg-success
+                    {% elif order.status == 'cancelled' %}bg-danger
+                    {% endif %}">
+                    {{ order.status }}
+                </span>
+            </td>
+            <td>{{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+            <td>
+                <div class="d-flex justify-content-center">
+                    <a href="#" class="action-btn text-primary me-2" title="Просмотреть" data-bs-toggle="modal" data-bs-target="#orderDetailsModal">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                </div>
+            </td>
+        </tr>
+    {% endfor %}
+{% else %}
+    <tr>
+        <td colspan="7"><i>Заказов ещё нет.</i></td>
+    </tr>
+{% endif %}
                             </tbody>
                         </table>
                     </div>
-                </div>
-                <div class="card-footer d-flex justify-content-between align-items-center">
-                    <div class="text-muted">Показано с 1 по 4 из 42 заказов</div>
-                    <nav>
-                        <ul class="pagination mb-0">
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#" tabindex="-1">Назад</a>
-                            </li>
-                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">Вперед</a>
-                            </li>
-                        </ul>
-                    </nav>
                 </div>
             </div>
         </div>

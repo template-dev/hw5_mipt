@@ -86,22 +86,22 @@
                                     <th>Название</th>
                                     <th>Описание</th>
                                     <th>Стоимость</th>
-                                    <th>Дата создания</th>
                                     <th width="100">Действия</th>
                                 </tr>
                             </thead>
                             <tbody>
+                                {% if products is iterable and products_list %}
+                                {% for product in products_list %}
                                 <tr>
-                                    <td>1</td>
+                                    <td>{{ product.id }}</td>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            <img src="https://via.placeholder.com/150" class="user-avatar me-2">
+                                            <img src="{{ product.image_path }}" class="user-avatar me-2">
                                         </div>
                                     </td>
-                                    <td>Название</td>
-                                    <td>Описание</td>
-                                    <td>125,00</td>
-                                    <td>12.05.2025</td>
+                                    <td>{{ product.name }}</td>
+                                    <td>{{ product.description }}</td>
+                                    <td>{{ product.price }}</td>
                                     <td>
                                         <div class="d-flex justify-content-center">
                                             <a href="#" class="action-btn text-primary" title="Редактировать">
@@ -113,6 +113,12 @@
                                         </div>
                                     </td>
                                 </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <i>Товаров еще нет.</i>
+                                </tr>
+                                {% endif %}
                             </tbody>
                         </table>
                     </div>

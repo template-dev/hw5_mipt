@@ -12,7 +12,7 @@ class Users(Base):
     email = Column(String(100), nullable=False, unique=True)
     phone = Column(String(20), nullable=False)
     hashed_password = Column(String(255), nullable=False)
-    image_path = Column(String(255))
+    image_path = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, onupdate=datetime.utcnow)
     

@@ -1,20 +1,16 @@
-// Toggle submenu
 function toggleSubmenu(id) {
     const submenu = document.getElementById(id);
     submenu.classList.toggle('show');
     
-    // Rotate arrow icon
     const arrow = submenu.previousElementSibling.querySelector('.fa-chevron-down');
     arrow.classList.toggle('fa-rotate-180');
 }
 
-// Toggle sidebar on mobile
 function toggleSidebar() {
     const sidebar = document.querySelector('.sidebar');
     sidebar.classList.toggle('show');
 }
 
-// Close sidebar when clicking outside on mobile
 document.addEventListener('click', function(e) {
     const sidebar = document.querySelector('.sidebar');
     const menuToggle = document.querySelector('.menu-toggle');
@@ -23,7 +19,7 @@ document.addEventListener('click', function(e) {
         sidebar.classList.remove('show');
     }
 });
-// Превью загружаемого аватара
+
 document.getElementById('userAvatar').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
@@ -45,7 +41,6 @@ document.getElementById('userAvatar').addEventListener('change', function(e) {
     }
 });
 
-// Переключение видимости пароля
 function togglePasswordVisibility(inputId, toggleElement) {
     const input = document.getElementById(inputId);
     const icon = toggleElement.querySelector('i');
@@ -61,75 +56,56 @@ function togglePasswordVisibility(inputId, toggleElement) {
     }
 }
 
-// Валидация формы
-document.getElementById('saveUserBtn').addEventListener('click', function() {
-    const form = document.getElementById('addUserForm');
-    const password = document.getElementById('userPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    
-    // Проверка валидности формы
+document.getElementById("saveUserBtn").addEventListener("click", async function () {
+    const form = document.getElementById("addUserForm");
     if (!form.checkValidity()) {
-        form.classList.add('was-validated');
+        form.classList.add("was-validated");
         return;
     }
-    
-    // Проверка совпадения паролей
+
+    const firstName = document.getElementById("firstName").value;
+    const lastName = document.getElementById("lastName").value;
+    const email = document.getElementById("userEmail").value;
+    const phone = document.getElementById("userPhone").value;
+    const password = document.getElementById("userPassword").value;
+    const confirmPassword = document.getElementById("confirmPassword").value;
+    const avatarInput = document.getElementById("userAvatar");
+    const avatarFile = avatarInput.files[0];
+
     if (password !== confirmPassword) {
-        document.getElementById('confirmPassword').classList.add('is-invalid');
+        alert("Пароли не совпадают");
         return;
-    } else {
-        document.getElementById('confirmPassword').classList.remove('is-invalid');
     }
-    
-    // Здесь будет код для сохранения пользователя
-    // Например, AJAX-запрос к серверу
-    
-    // Временное сообщение об успехе
-    alert('Пользователь успешно добавлен!');
-    
-    // Закрытие модального окна
-    const modal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
-    modal.hide();
-    
-    // Сброс формы
-    form.reset();
-    form.classList.remove('was-validated');
-    document.getElementById('avatarPreview').style.backgroundImage = 'url(https://via.placeholder.com/80)';
-    
-    // Здесь можно обновить таблицу пользователей
-    // loadUsers();
+
+    const formData = new FormData();
+    formData.append("first_name", firstName);
+    formData.append("last_name", lastName);
+    formData.append("email", email);
+    formData.append("phone", phone);
+    formData.append("password", password);
+    if (avatarFile) {
+        formData.append("avatar", avatarFile);
+    }
+
+    try {
+        const response = await fetch("/users", {
+            method: "POST",
+            body: formData
+        });
+        console.log(response)
+
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(result.msg);
+            const modal = bootstrap.Modal.getInstance(document.getElementById("addUserModal"));
+            modal.hide();
+            form.reset();
+        } else {
+            alert(result.detail || "Ошибка регистрации");
+        }
+    } catch (error) {
+        console.error("Ошибка:", error);
+        alert("Ошибка отправки формы");
+    }
 });
-
-// Сброс валидации при закрытии модального окна
-document.getElementById('addUserModal').addEventListener('hidden.bs.modal', function () {
-    const form = document.getElementById('addUserForm');
-    form.reset();
-    form.classList.remove('was-validated');
-    document.getElementById('avatarPreview').style.backgroundImage = 'url(https://via.placeholder.com/80)';
-});
-
-function previewAvatar(input) {
-  const preview = document.getElementById('avatarPreview');
-  const file = input.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = e => {
-      preview.style.backgroundImage = `url('${e.target.result}')`;
-    };
-    reader.readAsDataURL(file);
-  }
-}
-
-function togglePasswordVisibility(id, iconElement) {
-  const input = document.getElementById(id);
-  const icon = iconElement.querySelector('i');
-  if (input.type === 'password') {
-    input.type = 'text';
-    icon.classList.remove('fa-eye');
-    icon.classList.add('fa-eye-slash');
-  } else {
-    input.type = 'password';
-    icon.classList.remove('fa-eye-slash');
-    icon.classList.add('fa-eye');
-  }
-}
