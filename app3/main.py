@@ -15,7 +15,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from app3.admin.redirect_middleware import get_current_user_or_redirect
 from app3.admin.models import Users
 from fastapi.responses import RedirectResponse
-from app3.admin.routers import router as admin_router, get_statistics, get_db, get_users_count, get_orders, get_orders_count, enrich_orders_with_items, get_all_products
+from app3.admin.routers import router as admin_router, get_products_count, get_statistics, get_db, get_users_count, get_orders, get_orders_count, enrich_orders_with_items, get_all_products
 
 app = FastAPI()
 
@@ -36,6 +36,12 @@ app.mount(
     name="static"
 )
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+BASE_DIR2 = Path(__file__).resolve().parent
+STATIC_DIR2 = BASE_DIR2 / "static"
+UPLOADS_DIR2 = STATIC_DIR2 / "uploads"
+app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR2), name="uploads")
+
 templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 app.add_middleware(
@@ -126,10 +132,12 @@ async def products(request: Request, user: Users = Depends(get_current_user_or_r
     }
     
     products_list = await get_all_products(db)
+    products_count = len(products_list)
 
     return templates.TemplateResponse("admin/products.html", {
         "request": request,
         "products_list": products_list,
+        "products_count": products_count,
         **current_user
     })
 

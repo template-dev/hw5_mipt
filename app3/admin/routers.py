@@ -12,10 +12,12 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import func
 from app.orders.models import Order
 from app2.products.models import Product
+from app2.products import schemas
 from app3.admin.file_utils import save_upload_file
 import shutil
 import os
 from pathlib import Path
+from typing import Optional
 
 router = APIRouter()
 
@@ -201,3 +203,53 @@ async def get_all_products(db: AsyncSession):
             product.image_url = f"/{product.image_path}"
 
     return products
+
+async def get_products_count(db: AsyncSession = Depends(get_db)):
+    product_result = await db.execute(func.count(Product.id))
+    product_count = product_result.scalar()
+    return product_count
+
+@router.post("/products", response_model=schemas.Product, status_code=201)
+async def create_product(
+    name: str = Form(...),
+    description: Optional[str] = Form(None),
+    price: float = Form(...),
+    image: Optional[UploadFile] = File(None),
+    db: AsyncSession = Depends(get_db)
+):
+    db_product = Product(
+        name=name,
+        description=description,
+        price=price,
+        image_path=image.filename if image else None
+    )
+    
+    db.add(db_product)
+    await db.commit()
+    await db.refresh(db_product)
+    
+    if db_product.id is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to create product - ID not generated"
+        )
+    
+    if image:
+        try:
+            image_path = await save_upload_file(image, db_product.id)
+            db_product.image_path = image_path
+            await db.commit()
+            await db.refresh(db_product)
+        except Exception as e:
+            await db.delete(db_product)
+            await db.commit()
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to save image: {str(e)}"
+            )
+    
+    product_response = schemas.Product.from_orm(db_product)
+    if db_product.image_path:
+        product_response.image_url = f"/{db_product.image_path}"
+    
+    return product_response
