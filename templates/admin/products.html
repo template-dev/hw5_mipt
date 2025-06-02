@@ -104,10 +104,11 @@
                                     <td>{{ product.price }}</td>
                                     <td>
                                         <div class="d-flex justify-content-center">
-                                            <a href="#" class="action-btn text-primary" title="Редактировать">
+                                            <a href="#" class="action-btn text-primary edit-product-btn" data-product-id="{{ product.id }}" title="Редактировать">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <a href="#" class="action-btn text-danger" title="Удалить">
+                                            <a href="#" class="action-btn text-danger delete-product-btn" 
+                                                title="Удалить" data-product-id="{{ product.id }}">
                                                 <i class="fas fa-trash"></i>
                                             </a>
                                         </div>
@@ -190,5 +191,88 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal для подтверждения удаления -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Подтверждение удаления
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Вы уверены, что хотите удалить этот товар? Это действие нельзя отменить.</p>
+                    <input type="hidden" id="productIdToDelete">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> Отменить
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="fas fa-trash me-1"></i> Удалить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования товара -->
+    <div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <form id="editProductForm" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Изменить товар</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editProductId" name="id">
+                
+                <div class="mb-3">
+                <label for="editProductName" class="form-label">Название</label>
+                <input type="text" class="form-control" id="editProductName" name="name" required>
+                </div>
+
+                <div class="mb-3">
+                <label for="editProductDescription" class="form-label">Описание</label>
+                <textarea class="form-control" id="editProductDescription" name="description"></textarea>
+                </div>
+
+                <div class="mb-3">
+                <label for="editProductPrice" class="form-label">Цена</label>
+                <input type="number" step="0.01" class="form-control" id="editProductPrice" name="price" required>
+                </div>
+
+                <div class="mb-3">
+                <label for="editProductImage" class="form-label">Изображение</label>
+                <input type="file" class="form-control" id="editProductImage" name="image_path">
+                <img id="editProductImagePreview" src="" alt="Превью" class="img-fluid mt-2" style="max-height: 200px;">
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary saveChangesBtn">Сохранить</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+            </div>
+            </form>
+        </div>
+    </div>
+    <style>
+        #confirmDeleteModal .modal-header {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        #confirmDeleteModal .modal-footer .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        #confirmDeleteModal .modal-footer .btn-danger:hover {
+            background-color: #bb2d3b;
+            border-color: #b02a37;
+        }
+    </style>
 </body>
 </html>

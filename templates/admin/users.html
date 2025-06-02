@@ -101,12 +101,9 @@
                                     </td>
                                     <td>{{ u.email }}</td>
                                     <td>{{ u.phone }}</td>
-                                    <td>{{ u.created_at }}</td>
+                                    <td>{{ u.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
                                     <td>
                                         <div class="d-flex justify-content-center">
-                                            <a href="#" class="action-btn text-primary" title="Редактировать">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
                                             <a href="#" class="action-btn text-danger" title="Удалить">
                                                 <i class="fas fa-trash"></i>
                                             </a>

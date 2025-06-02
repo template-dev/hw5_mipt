@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Form, UploadFile, File, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Form, UploadFile, File, Request, Response
 from fastapi.responses import JSONResponse
+from fastapi import Path as FPath
 from sqlalchemy.ext.asyncio import AsyncSession
 from app3.database.db import AsyncSessionLocal
 from app3.admin import auth
@@ -18,6 +19,8 @@ import shutil
 import os
 from pathlib import Path
 from typing import Optional
+from app3.admin.redirect_middleware import get_current_user_or_redirect
+from app3.admin.models import Users
 
 router = APIRouter()
 
@@ -253,3 +256,86 @@ async def create_product(
         product_response.image_url = f"/{db_product.image_path}"
     
     return product_response
+
+@router.delete("/products/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_product(
+    product_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Users = Depends(get_current_user_or_redirect)
+):
+    # Проверяем существование товара
+    result = await db.execute(select(Product).where(Product.id == product_id))
+    product = result.scalars().first()
+    
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Товар не найден"
+        )
+    
+    # Удаляем изображение, если оно есть
+    if product.image_path:
+        try:
+            image_path = Path("uploads") / product.image_path
+            if image_path.exists():
+                image_path.unlink()
+        except Exception as e:
+            print(f"Ошибка при удалении изображения: {e}")
+    
+    # Удаляем товар из БД
+    await db.delete(product)
+    await db.commit()
+    
+    return Response(status_code=status.HTTP_200_OK)
+
+@router.get("/products/{product_id}", response_model=schemas.Product)
+async def get_product_by_id(
+    product_id: int = FPath(..., title="ID товара"),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(Product).where(Product.id == product_id))
+    product = result.scalars().first()
+
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Товар не найден"
+        )
+
+    product_data = schemas.Product.from_orm(product)
+    if product.image_path:
+        product_data.image_url = f"/{product.image_path}"
+
+    return product_data
+
+@router.put("/products/{product_id}")
+async def update_product(
+    product_id: int,
+    name: str = Form(...),
+    description: str = Form(""),
+    price: float = Form(...),
+    image: UploadFile = File(None),
+    db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(select(Product).where(Product.id == product_id))
+    product = result.scalars().first()
+
+    if not product:
+        raise HTTPException(status_code=404, detail="Товар не найден")
+
+    product.name = name
+    product.description = description
+    product.price = price
+
+    if image:
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+        image_path = os.path.join(UPLOAD_DIR, image.filename)
+
+        with open(image_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+
+        product.image_path = image_path
+
+    await db.commit()
+    return {"message": "Товар обновлен"}
